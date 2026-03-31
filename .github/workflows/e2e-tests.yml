@@ -62,7 +62,7 @@ jobs:
             return 1
           }
 
-          wait_for_url "API" "http://localhost:3001"
+          wait_for_url "API" "http://localhost:3001/api/topics"
           wait_for_url "Front" "http://localhost:8080"
 
       - name: Install E2E dependencies
