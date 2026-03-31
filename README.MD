@@ -29,15 +29,15 @@ Configuracion implementada:
 
 Capturas del flujo y resultado:
 
-![Paso 1](image.png)
+![Paso 1](img/image.png)
 
-![Paso 2](image-1.png)
+![Paso 2](img/image-1.png)
 
-![Paso 3](image-2.png)
+![Paso 3](img/image-2.png)
 
-![Paso 4](image-3.png)
+![Paso 4](img/image-3.png)
 
-![Paso 5](image-4.png)
+![Paso 5](img/image-4.png)
 
 ## Referencias rapidas
 
