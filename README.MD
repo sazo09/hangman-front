@@ -39,8 +39,47 @@ Capturas del flujo y resultado:
 
 ![Paso 5](img/image-4.png)
 
+## 3) Workflow E2E Tests - OPCIONAL
+
+Archivo: `.github/workflows/e2e-tests.yml`
+
+Configuracion implementada:
+
+- Se dispara manualmente con `workflow_dispatch`.
+- Construye las imagenes Docker de `hangman-api` y `hangman-front` desde el codigo fuente.
+- Levanta ambos contenedores en el runner:
+  - API en `localhost:3001`
+  - Front en `localhost:8080` con `API_URL=http://localhost:3001`
+- Espera que ambos servicios esten listos antes de ejecutar los tests.
+- Ejecuta los tests E2E con Cypress en modo headless (`cypress run`).
+- Sube screenshots y videos como Artifacts en caso de fallo.
+- Para y elimina los contenedores siempre al finalizar (`if: always()`).
+
+### Pasos para ejecutar
+
+1. Ir a la pestana **Actions** del repositorio.
+2. Seleccionar **E2E Tests** en el panel izquierdo.
+3. Pulsar **Run workflow** sobre la rama `main`.
+4. Esperar a que el job complete los siguientes stages:
+   - Build API Docker image
+   - Build Front Docker image
+   - Start API container
+   - Start Front container
+   - Wait for services to be ready
+   - Install E2E dependencies
+   - Run Cypress tests
+5. Si el job falla, descargar los Artifacts (`cypress-artifacts`) para ver screenshots y videos de Cypress.
+
+### Evidencia (capturas)
+
+![Paso-1](img/image-e2e2.png)
+![Paso-2](img/image-e2e1.png)
+
 ## Referencias rapidas
 
 - CI: `.github/workflows/ci-front.yml`
 - CD: `.github/workflows/cd-front.yml`
+- E2E: `.github/workflows/e2e-tests.yml`
 - Proyecto frontend: `hangman-front/`
+- Proyecto API: `hangman-api/`
+- Tests E2E: `hangman-e2e/e2e/`
