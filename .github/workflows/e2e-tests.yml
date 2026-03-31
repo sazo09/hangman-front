@@ -1,0 +1,95 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Run Cypress E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: hangman-e2e/e2e/package-lock.json
+
+      - name: Build API Docker image
+        run: docker build -t hangman-api:ci ./hangman-api
+
+      - name: Build Front Docker image
+        run: docker build --build-arg API_URL=http://localhost:3001 -t hangman-front:ci ./hangman-front
+
+      - name: Start API container
+        run: |
+          docker run -d --name hangman-api -p 3001:3000 \
+            -e PORT=3000 \
+            -e HOST=0.0.0.0 \
+            -e DATA_BASE_ACTIVE=false \
+            hangman-api:ci
+
+      - name: Start Front container
+        run: |
+          docker run -d --name hangman-front -p 8080:8080 \
+            -e API_URL=http://localhost:3001 \
+            hangman-front:ci
+
+      - name: Wait for services to be ready
+        run: |
+          set -e
+
+          wait_for_url() {
+            local name="$1"
+            local url="$2"
+            local attempts=40
+
+            for i in $(seq 1 "$attempts"); do
+              if curl -fsS "$url" > /dev/null; then
+                echo "$name is ready"
+                return 0
+              fi
+              echo "[$i/$attempts] waiting for $name at $url"
+              sleep 2
+            done
+
+            echo "$name did not become ready in time"
+            return 1
+          }
+
+          wait_for_url "API" "http://localhost:3001"
+          wait_for_url "Front" "http://localhost:8080"
+
+      - name: Install E2E dependencies
+        working-directory: hangman-e2e/e2e
+        run: npm ci
+
+      - name: Run Cypress tests
+        working-directory: hangman-e2e/e2e
+        run: npx cypress run
+
+      - name: Upload Cypress artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          if-no-files-found: ignore
+          path: |
+            hangman-e2e/e2e/cypress/screenshots
+            hangman-e2e/e2e/cypress/videos
+
+      - name: Print containers logs on failure
+        if: failure()
+        run: |
+          docker logs hangman-api || true
+          docker logs hangman-front || true
+
+      - name: Stop and remove containers
+        if: always()
+        run: |
+          docker rm -f hangman-api hangman-front || true
